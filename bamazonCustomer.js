@@ -123,7 +123,7 @@ function updateTable(reqQty, id) {
   connection.query(query, { item_id: id }, function(err, response) {
     if (err) throw err;
 
-    console.log("Your total cost to purchase qty. " + chalk.inverse(reqQty) + " of " + response[0].product_name + " is $" + chalk.inverse(response[0].price * reqQty) + ".\n");
+    console.log("Your total cost to purchase qty. " + chalk.bgCyan.black(reqQty) + " of " + (response[0].product_name) + " is $" + chalk.bgCyan.black(response[0].price * reqQty) + ".\n");
 
     todoPrompt();
   });
