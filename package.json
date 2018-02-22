@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/v-tank/Bamazon#readme",
   "dependencies": {
+    "chalk": "^2.3.1",
     "inquirer": "^5.1.0",
     "mysql": "^2.15.0"
   }
