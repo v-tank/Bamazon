@@ -1,6 +1,7 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 const chalk = require("chalk");
+const cTable = require("console.table");
 const log = console.log;
 
 var connection = mysql.createConnection({
@@ -21,12 +22,9 @@ connection.connect(function(err) {
 function printAllItems() {
   connection.query("SELECT item_id, product_name, price, stock_quantity FROM products", function(err, res) {
     if (err) throw err;
-
-    for (var i = 0; i < res.length; i++) {
-      log(
-        chalk.red("Item ID: ") + res[i].item_id + " || " + chalk.yellow("Product Name: ") + res[i].product_name + " || " + chalk.cyan("Price: ") + "$" + res[i].price + " || " + chalk.magenta("Quantity in Stock: ") + res[i].stock_quantity
-      );
-    }
+    
+    console.log("\n");
+    console.table(res);
     console.log("\n");
     
     todoPrompt();
@@ -83,11 +81,9 @@ function purchaseItem() {
         var query = "SELECT item_id, product_name, price, stock_quantity FROM products WHERE ?"
         connection.query(query, { item_id: response.id }, function(err, res) {
           if (err) throw err;
-      
           
-            console.log(
-              "\n" + chalk.red("Item ID: ") + res[0].item_id + " || " + chalk.yellow("Product Name: ") + res[0].product_name + " || " + chalk.cyan("Price: ") + "$" + res[0].price + " || " + chalk.magenta("Quantity: ") + res[0].stock_quantity
-            );
+          console.log("\n");
+          console.table(res);
           
           // Check if there's enough inventory
           checkInventory(response.quantity, res[0].stock_quantity, res[0].item_id);
@@ -125,6 +121,13 @@ function updateTable(reqQty, id) {
 
     console.log("Your total cost to purchase qty. " + chalk.bgCyan.black(reqQty) + " of " + (response[0].product_name) + " is $" + chalk.bgCyan.black(response[0].price * reqQty) + ".\n");
 
-    todoPrompt();
+    var updateSales = "UPDATE products SET product_sales = product_sales + ? WHERE ?";
+    connection.query(updateSales, [response[0].price * reqQty, {item_id: id}], function(err, response) {
+      if (err) throw err;
+
+      log(chalk.green("Product Sales updated!\n"));
+      
+      todoPrompt();
+    });
   });
 }
