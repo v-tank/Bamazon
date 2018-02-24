@@ -1,9 +1,11 @@
+// Require necessary packages
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 const chalk = require("chalk");
 const cTable = require("console.table");
 const log = console.log;
 
+// Define connection details for database
 var connection = mysql.createConnection({
   host: "localhost",
   port: 3306,
@@ -12,25 +14,31 @@ var connection = mysql.createConnection({
   database: "bamazon"
 });
 
+// Establish connection
 connection.connect(function(err) {
   if (err) throw err;
 
   console.log("Connection established on id " + connection.threadId + ".\n");
+
+  // Call function to print all items upon start
   printAllItems();
 });
 
+// Function to print all items
 function printAllItems() {
+  // Query to retrieve important info from the table
   connection.query("SELECT item_id, product_name, price, stock_quantity FROM products", function(err, res) {
     if (err) throw err;
 
     console.log("\n");
-    console.table(res);
+    console.table(res); // Prints the resulting table in a pretty format
     console.log("\n");
     
-    todoPrompt();
+    todoPrompt(); // Prompt user to select next steps
   });
 }
 
+// Function to prompt user to select what they'd like to do
 function todoPrompt() {
   inquirer
     .prompt({
@@ -40,6 +48,7 @@ function todoPrompt() {
       choices: ["Purchase an item", "Exit"]
     })
     .then(function(res) {
+      // Call corresponding function based on user's choice
       switch (res.todo) {
         case "Purchase an item":
           purchaseItem();
@@ -51,6 +60,7 @@ function todoPrompt() {
     });
 }
 
+// Function to purchase an item
 function purchaseItem() {
   inquirer
     .prompt([{
@@ -76,8 +86,9 @@ function purchaseItem() {
     }
     ])
     .then(function(response) {
+      // If user confirms, proceed with the purchasing process
       if (response.confirm) {
-        // console.log(response.id + "; " + response.quantity);
+        // Query to display the item the user selected and to obtain the stock quantity
         var query = "SELECT item_id, product_name, price, stock_quantity FROM products WHERE ?"
         connection.query(query, { item_id: response.id }, function(err, res) {
           if (err) throw err;
@@ -90,31 +101,37 @@ function purchaseItem() {
         });
       }
       else {
+        // Else, return to the main prompt
         todoPrompt();
       }
     });
 }
 
+// Function to check if there's enough stock in the inventory
 function checkInventory(reqQty, inventoryQty, id) {
   console.log("Checking inventory...");
+  // Conditional to to determine whether the user-entered quantity exceeds the inventory
   if (reqQty > inventoryQty) {
     log(chalk.red("Sorry! Insufficient quantity in stock!\n"));
     todoPrompt();
   } else if (reqQty <= inventoryQty) {
+    // If there's enough in stock, update the table to subtract the purchased quantity
     log(chalk.green("Item(s) purchased!\n"));
     // Update table
     updateTable(reqQty, id);
   }
 }
 
+// Function to update the table with the new quantity
 function updateTable(reqQty, id) {
+  // Query to subtract the user-desired quantity from the existing quantity in inventory
   var updateQuery = "UPDATE products SET stock_quantity = stock_quantity - ? WHERE ?";
   connection.query(updateQuery, [reqQty, {item_id: id}], function(err, res) {
     if (err) throw err;
 
-    // console.log("Table has been updated!");
   });
 
+  // Query to retrieve the updated info and to calculate the total sales for the item purchased
   var query = "SELECT item_id, product_name, price FROM products WHERE ?"
   connection.query(query, { item_id: id }, function(err, response) {
     if (err) throw err;
