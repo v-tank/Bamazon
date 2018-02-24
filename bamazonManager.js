@@ -1,9 +1,11 @@
+// Require necessary packages
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 const chalk = require("chalk");
 const cTable = require("console.table");
 const log = console.log;
 
+// Define connection details for database
 var connection = mysql.createConnection({
   host: "localhost",
   port: 3306,
@@ -12,13 +14,17 @@ var connection = mysql.createConnection({
   database: "bamazon"
 });
 
+// Establish connection
 connection.connect(function(err) {
   if (err) throw err;
 
   console.log("Connection established on id " + connection.threadId + ".\n");
+
+  // Call function to prompt the user
   todoPrompt();
 });
 
+// Function to prompt user to select what they'd like to do
 function todoPrompt() {
   inquirer
     .prompt({
@@ -28,6 +34,7 @@ function todoPrompt() {
       choices: ["View Products for Sale", "View Low Inventory", "Add to Inventory", "Add New Product", "Exit"]
     })
     .then(function(res) {
+      // Call corresponding function based on user's choice
       switch (res.todo) {
         case "View Products for Sale":
           viewProducts();
@@ -48,18 +55,20 @@ function todoPrompt() {
     });
 }
 
+// Function to print all items
 function viewProducts() {
   connection.query("SELECT item_id, product_name, price, stock_quantity FROM products", function (err, res) {
     if (err) throw err;
 
     console.log("\n");
-    console.table(res);
+    console.table(res); // Prints the resulting table in a pretty format
     console.log("\n");
 
-    todoPrompt();
+    todoPrompt(); // Prompt user to select next steps
   });
 }
 
+// Function to print all items that have a stock quantity of less than 5
 function viewLowInventory() {
   connection.query("SELECT item_id, product_name, price, stock_quantity FROM products WHERE stock_quantity < 5", function(err, res) {
     if (err) throw err;
@@ -72,6 +81,7 @@ function viewLowInventory() {
   });
 }
 
+// Function to add new stock to inventory
 function addToInventory() {
   inquirer
     .prompt([{
@@ -98,6 +108,7 @@ function addToInventory() {
     ])
     .then(function(response) {
       if (response.confirm) {
+        // Query to update the stock quantity with the user-inputted value
         var updateQuery = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE ?";
         connection.query(updateQuery, [response.quantity, {item_id: response.id}], function(err, res) {
           if (err) throw err;
@@ -113,6 +124,7 @@ function addToInventory() {
     });
 }
 
+// Function to add a new product to the inventory
 function addNewProduct() {
   inquirer
     .prompt([{
@@ -155,6 +167,7 @@ function addNewProduct() {
     ])
     .then(function(response) {
       if (response.confirm) {
+        // Query to insert the user-inputted product to the table
         var addQuery = "INSERT INTO products (product_name, department_name, price, stock_quantity) VALUES (?,?,?,?)";
         connection.query(addQuery, [response.productName, response.department, response.price, response.quantity], function(err, res) {
           if (err) throw err;
