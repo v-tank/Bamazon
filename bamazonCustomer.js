@@ -22,13 +22,13 @@ connection.connect(function(err) {
 function printAllItems() {
   connection.query("SELECT item_id, product_name, price, stock_quantity FROM products", function(err, res) {
     if (err) throw err;
-    
+
     console.log("\n");
     console.table(res);
     console.log("\n");
     
     todoPrompt();
-  })
+  });
 }
 
 function todoPrompt() {
@@ -58,7 +58,7 @@ function purchaseItem() {
       type: "input",
       message: "What is the ID of the item you'd like to purchase?",
       validate: function(value) {
-        if ((isNaN(value) === false) && (value >= 0)) {
+        if ((isNaN(value) === false) && (value >= 0) && (value != "")) {
           return true;
         }
         return false;

@@ -1,6 +1,7 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 const chalk = require("chalk");
+const cTable = require("console.table");
 const log = console.log;
 
 var connection = mysql.createConnection({
@@ -48,16 +49,13 @@ function todoPrompt() {
 }
 
 function viewProducts() {
-  connection.query("SELECT item_id, product_name, price, stock_quantity FROM products", function(err, res) {
+  connection.query("SELECT item_id, product_name, price, stock_quantity FROM products", function (err, res) {
     if (err) throw err;
 
-    for (var i = 0; i < res.length; i++) {
-      log(
-        chalk.red("Item ID: ") + res[i].item_id + " || " + chalk.yellow("Product Name: ") + res[i].product_name + " || " + chalk.cyan("Price: ") + "$" + res[i].price + " || " + chalk.magenta("Quantity in Stock: ") + res[i].stock_quantity
-      );
-    }
     console.log("\n");
-    
+    console.table(res);
+    console.log("\n");
+
     todoPrompt();
   });
 }
@@ -66,11 +64,8 @@ function viewLowInventory() {
   connection.query("SELECT item_id, product_name, price, stock_quantity FROM products WHERE stock_quantity < 5", function(err, res) {
     if (err) throw err;
 
-    for (var i = 0; i < res.length; i++) {
-      log(
-        chalk.red("Item ID: ") + res[i].item_id + " || " + chalk.yellow("Product Name: ") + res[i].product_name + " || " + chalk.cyan("Price: ") + "$" + res[i].price + " || " + chalk.magenta("Quantity in Stock: ") + res[i].stock_quantity
-      );
-    }
+    console.log("\n");
+    console.table(res);
     console.log("\n");
     
     todoPrompt();
@@ -98,7 +93,7 @@ function addToInventory() {
     {
       name: "confirm",
       type: "confirm",
-      message: "Are you sure you'd like to make the purchase?"
+      message: "Are you sure you'd like to add to the inventory?"
     }
     ])
     .then(function(response) {
@@ -107,8 +102,13 @@ function addToInventory() {
         connection.query(updateQuery, [response.quantity, {item_id: response.id}], function(err, res) {
           if (err) throw err;
 
-          log(chalk.green("Successfully added " + response.quantity + " units of item ID " +  response.id + " to the inventory."));
+          log(chalk.green("Successfully added " + response.quantity + " units of item ID " +  response.id + " to the inventory.\n"));
+
+          todoPrompt();
         });
+      }
+      else {
+        todoPrompt();
       }
     });
 }
@@ -151,7 +151,7 @@ function addNewProduct() {
       name: "confirm",
       type: "confirm",
       message: "Are you sure you'd like to add the item to the inventory?"
-    },
+    }
     ])
     .then(function(response) {
       if (response.confirm) {
@@ -163,6 +163,8 @@ function addNewProduct() {
 
           todoPrompt();
         });
+      } else {
+        todoPrompt();
       }
     });
 }
