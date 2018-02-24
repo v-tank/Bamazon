@@ -1,6 +1,7 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 const chalk = require("chalk");
+const cTable = require("console.table");
 const log = console.log;
 
 var connection = mysql.createConnection({
@@ -44,5 +45,13 @@ function todoPrompt() {
 
 
 function viewProductSales() {
-  
+  var query = "SELECT departments.`department_id`, departments.`department_name`, departments.`overhead_costs`, SUM(products.`product_sales`) AS product_sales, (-departments.`overhead_costs` + SUM(products.`product_sales`)) AS total_profit FROM departments INNER JOIN products ON departments.`department_name` = products.`department_name` GROUP BY departments.`department_id` ASC;"
+  connection.query(query, function (err, res) {
+    if (err) throw err;
+
+    console.log("\n");
+    console.table(res);
+
+    todoPrompt();
+  });
 }
