@@ -45,7 +45,7 @@ function todoPrompt() {
 
 
 function viewProductSales() {
-  var query = "SELECT departments.`department_id`, departments.`department_name`, departments.`overhead_costs`, SUM(products.`product_sales`) AS product_sales, (-departments.`overhead_costs` + SUM(products.`product_sales`)) AS total_profit FROM departments INNER JOIN products ON departments.`department_name` = products.`department_name` GROUP BY departments.`department_id` ASC;"
+  var query = "SELECT departments.`department_id`, departments.`department_name`, departments.`overhead_costs`, SUM(products.`product_sales`) AS product_sales, (-departments.`overhead_costs` + SUM(products.`product_sales`)) AS total_profit FROM departments LEFT JOIN products ON departments.`department_name` = products.`department_name` GROUP BY departments.`department_id` ASC;"
   connection.query(query, function (err, res) {
     if (err) throw err;
 
@@ -54,4 +54,41 @@ function viewProductSales() {
 
     todoPrompt();
   });
+}
+
+function createNewDepartment() {
+  inquirer
+    .prompt([{
+      name: "deptName",
+      type: "input",
+      message: "What is the new department's name?",
+    },
+    {
+      name: "overheadCosts",
+      type: "input",
+      message: "What are the department's overhead costs?"
+    },
+    {
+      name: "confirm",
+      type: "confirm",
+      message: "Are you sure you'd like to add the new department?"
+    }
+    ])
+    .then(function (response) {
+      if (response.confirm) {
+
+        var addQuery = "INSERT INTO departments (department_name, overhead_costs) VALUES (?,?)"
+        connection.query(addQuery, [response.deptName, response.overheadCosts], function (err, res) {
+          if (err) throw err;
+
+          log(chalk.green("Successfully added the product to the inventory.\n"));
+
+          todoPrompt();
+
+        });
+      }
+      else {
+        todoPrompt();
+      }
+    });
 }
